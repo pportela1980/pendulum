@@ -211,6 +211,149 @@
 
   .reset-btn:hover { border-color: var(--accent); color: var(--accent); }
 
+  /* --- explanatory content --- */
+  .explainer {
+    width: 100%;
+    max-width: 780px;
+    margin-top: 3.5rem;
+    border-top: 1px solid var(--border);
+    padding-top: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+
+  .explainer-section .section-label {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+  }
+
+  .explainer-section h2 {
+    font-family: var(--serif);
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    font-weight: 400;
+    color: var(--text);
+    line-height: 1.2;
+    margin-bottom: 1.25rem;
+  }
+
+  .explainer-section h2 em { font-style: italic; color: var(--accent); }
+
+  .explainer-section p {
+    font-size: 14px;
+    line-height: 1.85;
+    color: var(--muted);
+    margin-bottom: 1rem;
+    max-width: 68ch;
+  }
+
+  .explainer-section p:last-of-type { margin-bottom: 0; }
+
+  .explainer-section p strong { color: var(--text); font-weight: 500; }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-top: 1.5rem;
+  }
+
+  @media (max-width: 560px) { .two-col { grid-template-columns: 1fr; } }
+
+  .fact-block {
+    border-left: 1px solid var(--border-mid);
+    padding-left: 1.25rem;
+  }
+
+  .fact-block h4 {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.6rem;
+  }
+
+  .fact-block p {
+    font-size: 13px;
+    line-height: 1.75;
+    color: var(--muted);
+    margin-bottom: 0;
+  }
+
+  .equation {
+    display: inline-block;
+    margin: 1rem 0;
+    padding: 0.6rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 13px;
+    color: var(--accent);
+    letter-spacing: 0.04em;
+  }
+
+  .ssc-block {
+    width: 100%;
+    max-width: 780px;
+    margin-top: 3rem;
+    border: 1px solid var(--border-mid);
+    border-radius: 8px;
+    padding: 2rem 2rem 1.75rem;
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .ssc-eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .ssc-block h2 {
+    font-family: var(--serif);
+    font-size: clamp(1.3rem, 3vw, 1.8rem);
+    font-weight: 400;
+    color: var(--text);
+    line-height: 1.25;
+  }
+
+  .ssc-block h2 em { font-style: italic; color: var(--accent); }
+
+  .ssc-block p {
+    font-size: 13.5px;
+    line-height: 1.8;
+    color: var(--muted);
+    max-width: 64ch;
+  }
+
+  .ssc-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 0.5rem;
+    padding: 8px 18px;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: #0e0e0f;
+    background: var(--accent);
+    border-radius: 4px;
+    transition: opacity 0.15s;
+    align-self: flex-start;
+  }
+
+  .ssc-link:hover { opacity: 0.85; }
+
   canvas {
     display: block;
     width: 100%;
@@ -273,8 +416,38 @@
   <canvas id="c" height="480"></canvas>
 </div>
 
+<div class="explainer">
+
+  <div class="explainer-section">
+    <p class="section-label">The physics</p>
+    <h2>Complicated vs. <em>Complex</em></h2>
+    <p>The single pendulum is <strong>complicated</strong>. It has one moving part, governed by one rule: gravity pulls the bob back toward centre. Given the starting angle, you can predict exactly where it will be at any point in the future. It is analysable, controllable, and fully knowable. Engineers love it.</p>
+    <p>The double pendulum is <strong>complex</strong>. A second arm is attached to the end of the first. The rules are still exact — nothing random is happening — but the two arms interact with each other in ways that make the overall behaviour impossible to predict beyond a short time horizon. Start it twice from nearly identical positions and the paths will diverge completely within seconds. This is called <em>deterministic chaos</em>: governed by laws, but not by forecasts.</p>
+    <p>Turn on <strong>Trails</strong> and increase the starting angle above 90°. The single pendulum draws the same clean arc, over and over. The double pendulum fills the canvas with a pattern that never repeats. Same simulation engine. Same physical laws. Fundamentally different kind of system.</p>
+    <div class="two-col">
+      <div class="fact-block">
+        <h4>Why this matters beyond physics</h4>
+        <p>Most of our planning tools — logframes, theories of change, causal models — are built for complicated systems. They assume that if you understand the parts, you can predict the whole. The double pendulum is a reminder that this assumption breaks down as soon as components interact in non-trivial ways. Social systems, organisations, and communities in transition behave much more like the double pendulum than the single one.</p>
+      </div>
+      <div class="fact-block">
+        <h4>Sensitive dependence</h4>
+        <p>In a complex system, small differences in starting conditions compound over time. This is not a flaw or a gap in knowledge — it is a structural property of the system. It means that two communities receiving identical interventions can produce very different outcomes, not because one "worked" and one didn't, but because the systems they were embedded in were not identical — and never could be.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="ssc-block">
+  <p class="ssc-eyebrow">About this resource</p>
+  <h2>School of Systems<br>&amp; <em>Complexity</em></h2>
+  <p>This simulation is part of a series of interactive teaching resources produced by the School of Systems and Complexity (SSC) — a practitioner school working at the intersection of systems thinking, complexity science, and organisational change. SSC develops education, advisory practice, and community of practice programmes for those navigating environments where the complicated and the complex meet.</p>
+  <p>If you are a practitioner, educator, researcher, or leader working with systems that resist straightforward analysis — this is the work we do.</p>
+  <a class="ssc-link" href="https://systemsandcomplexity.school" target="_blank">Visit systemsandcomplexity.school &#8599;</a>
+</div>
+
 <footer>
-  Built with vanilla JS &amp; Canvas API &mdash; <a href="https://github.com/pedro/pendulum" target="_blank">github.com/pedro/pendulum</a>
+  Built with vanilla JS &amp; Canvas API &mdash; <a href="https://github.com/pedro/pendulum" target="_blank">github.com/pedro/pendulum</a> &mdash; a resource by <a href="https://systemsandcomplexity.school" target="_blank">SSC</a>
 </footer>
 
 <script>
