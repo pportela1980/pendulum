@@ -9,17 +9,17 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg: #0e0e0f;
-    --surface: #17171a;
-    --border: rgba(255,255,255,0.08);
-    --border-mid: rgba(255,255,255,0.14);
-    --text: #e8e6e0;
-    --muted: #7a7870;
-    --accent: #c8b89a;
-    --teal: #5DCAA5;
-    --blue: #85B7EB;
-    --purple: #9f98e8;
-    --amber: #EF9F27;
+    --bg: #F5F0E8;
+    --surface: #EDE8DC;
+    --border: rgba(44,40,32,0.12);
+    --border-mid: rgba(44,40,32,0.22);
+    --text: #2C2820;
+    --muted: #888070;
+    --accent: #8C3A1E;
+    --teal: #2A7A5A;
+    --blue: #2A5A8C;
+    --purple: #5A4A8C;
+    --amber: #8C6A1E;
     --mono: 'DM Mono', monospace;
     --serif: 'DM Serif Display', serif;
   }
@@ -139,7 +139,7 @@
 
   .toggle-btn.active {
     background: var(--accent);
-    color: #0e0e0f;
+    color: #F5F0E8;
   }
 
   .slider-group {
@@ -345,7 +345,7 @@
     letter-spacing: 0.08em;
     text-transform: uppercase;
     text-decoration: none;
-    color: #0e0e0f;
+    color: #F5F0E8;
     background: var(--accent);
     border-radius: 4px;
     transition: opacity 0.15s;
@@ -359,7 +359,7 @@
     width: 100%;
     border: 1px solid var(--border);
     border-radius: 6px;
-    background: #0a0a0b;
+    background: #EDE8DC;
   }
 
   footer {
@@ -471,13 +471,16 @@ const MAX_PERSIST = 8000;
 
 function initState() {
   const a = startAngle * Math.PI / 180;
-  state = { a1: a, a2: a, v1: 0, v2: 0 };
+  // tiny random perturbation — invisible to the eye but guarantees
+  // trajectory divergence across resets from the same starting angle
+  const noise = (Math.random() - 0.5) * 0.0006;
+  state = { a1: a + noise, a2: a + noise, v1: 0, v2: 0 };
   bobTrail1 = []; bobTrail2 = [];
 }
 
 function stepSingle(dt) {
   state.v1 += -(g / L1) * Math.sin(state.a1) * dt;
-  state.v1 *= 0.9999;
+  state.v1 *= 0.9998; // light damping — converges in ~2–3 minutes at normal speed
   state.a1 += state.v1 * dt;
 }
 
@@ -494,7 +497,7 @@ function stepDouble(dt) {
     2 * s * (v1 * v1 * L1 * 2 + g * 2 * Math.cos(a1) + v2 * v2 * L2 * c)
   ) / (L2 * denom);
   state.v1 += acc1 * dt; state.v2 += acc2 * dt;
-  state.v1 *= 0.9999; state.v2 *= 0.9999;
+  state.v1 *= 0.9998; state.v2 *= 0.9998; // light damping
   state.a1 += state.v1 * dt; state.a2 += state.v2 * dt;
 }
 
@@ -572,41 +575,41 @@ function draw() {
 
   if (showTrails) {
     if (mode === 'single') {
-      drawPersistTrail(bobTrail1, 93, 202, 165);
+      drawPersistTrail(bobTrail1, 42, 122, 90);
     } else {
-      drawPersistTrail(bobTrail1, 133, 183, 235);
-      drawPersistTrail(bobTrail2, 159, 148, 232);
+      drawPersistTrail(bobTrail1, 42, 90, 140);
+      drawPersistTrail(bobTrail2, 90, 74, 140);
     }
   } else {
     if (mode === 'single') {
-      drawFadedTrail(bobTrail1, 93, 202, 165);
+      drawFadedTrail(bobTrail1, 42, 122, 90);
     } else {
-      drawFadedTrail(bobTrail1, 133, 183, 235);
-      drawFadedTrail(bobTrail2, 159, 148, 232);
+      drawFadedTrail(bobTrail1, 42, 90, 140);
+      drawFadedTrail(bobTrail2, 90, 74, 140);
     }
   }
 
   // pivot
   ctx.beginPath(); ctx.arc(ox, oy, 4, 0, Math.PI*2);
-  ctx.fillStyle = 'rgba(200,184,154,0.3)'; ctx.fill();
+  ctx.fillStyle = 'rgba(44,40,32,0.35)'; ctx.fill();
 
   if (mode === 'single') {
     ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(x1, y1);
-    ctx.strokeStyle = 'rgba(200,184,154,0.35)';
+    ctx.strokeStyle = 'rgba(44,40,32,0.3)';
     ctx.lineWidth = 1.5; ctx.stroke();
 
     ctx.beginPath(); ctx.arc(x1, y1, 14, 0, Math.PI*2);
-    ctx.fillStyle = '#5DCAA5'; ctx.fill();
+    ctx.fillStyle = '#2A7A5A'; ctx.fill();
   } else {
     ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(x1, y1); ctx.lineTo(x2, y2);
-    ctx.strokeStyle = 'rgba(200,184,154,0.35)';
+    ctx.strokeStyle = 'rgba(44,40,32,0.3)';
     ctx.lineWidth = 1.5; ctx.stroke();
 
     ctx.beginPath(); ctx.arc(x1, y1, 11, 0, Math.PI*2);
-    ctx.fillStyle = '#85B7EB'; ctx.fill();
+    ctx.fillStyle = '#2A5A8C'; ctx.fill();
 
     ctx.beginPath(); ctx.arc(x2, y2, 14, 0, Math.PI*2);
-    ctx.fillStyle = '#9f98e8'; ctx.fill();
+    ctx.fillStyle = '#5A4A8C'; ctx.fill();
   }
 
   animId = requestAnimationFrame(draw);
