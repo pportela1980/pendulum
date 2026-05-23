@@ -362,6 +362,48 @@
     background: #EDE8DC;
   }
 
+  .graph-wrap {
+    margin-top: 1rem;
+  }
+
+  .graph-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    padding: 0 0.2rem;
+  }
+
+  .graph-title {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .graph-legend {
+    display: flex;
+    gap: 1.2rem;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+  }
+
+  .legend-swatch {
+    width: 14px;
+    height: 2.5px;
+    border-radius: 2px;
+    display: inline-block;
+  }
+
   footer {
     margin-top: 3rem;
     font-size: 11px;
@@ -414,6 +456,14 @@
     <button class="reset-btn" onclick="resetSim()">Reset</button>
   </div>
   <canvas id="c" height="480"></canvas>
+
+  <div class="graph-wrap">
+    <div class="graph-head">
+      <span class="graph-title">Angle over time</span>
+      <div class="graph-legend" id="graph-legend"></div>
+    </div>
+    <canvas id="graph" height="200"></canvas>
+  </div>
 </div>
 
 <div class="explainer">
@@ -454,6 +504,28 @@
 const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
 
+const graphCanvas = document.getElementById('graph');
+const gctx = graphCanvas.getContext('2d');
+
+// Rolling history of angles for the time-series graph.
+// Stored as wrapped values in radians, [-PI, PI]. Newest pushed to the end.
+// Sampling is decoupled from the physics substeps: we record one point every
+// SAMPLE_EVERY animation frames (not every substep), so the curve scrolls at a
+// calm, readable pace and you can actually see the sine shape — independent of
+// the Speed slider, which only affects how fast the pendulum itself moves.
+let angleHist1 = [], angleHist2 = [];
+const HIST_MAX = 140;        // number of points shown across the graph width
+const SAMPLE_EVERY = 8;      // record a point every Nth frame (higher = slower scroll)
+let frameCount = 0;
+const GRAPH_H = 200;
+
+// Wrap an angle to (-PI, PI] so a continuously rotating arm stays on the graph
+function wrapAngle(a) {
+  let x = (a + Math.PI) % (2 * Math.PI);
+  if (x < 0) x += 2 * Math.PI;
+  return x - Math.PI;
+}
+
 let mode = 'single';
 let startAngle = 45;
 let simSpeed = 5;
@@ -476,6 +548,8 @@ function initState() {
   const noise = (Math.random() - 0.5) * 0.0006;
   state = { a1: a + noise, a2: a + noise, v1: 0, v2: 0 };
   bobTrail1 = []; bobTrail2 = [];
+  angleHist1 = []; angleHist2 = [];
+  frameCount = 0;
 }
 
 function stepSingle(dt) {
@@ -571,6 +645,18 @@ function draw() {
     }
   }
 
+  // Sample the graph once every SAMPLE_EVERY frames, regardless of sim speed,
+  // so the time series scrolls calmly and the curve is legible.
+  frameCount++;
+  if (frameCount % SAMPLE_EVERY === 0) {
+    angleHist1.push(wrapAngle(state.a1));
+    if (angleHist1.length > HIST_MAX) angleHist1.shift();
+    if (mode === 'double') {
+      angleHist2.push(wrapAngle(state.a2));
+      if (angleHist2.length > HIST_MAX) angleHist2.shift();
+    }
+  }
+
   const { x1, y1, x2, y2 } = getBobPositions(ox, oy);
 
   if (showTrails) {
@@ -612,13 +698,113 @@ function draw() {
     ctx.fillStyle = '#5A4A8C'; ctx.fill();
   }
 
+  drawGraph();
+
   animId = requestAnimationFrame(draw);
+}
+
+// ============================================================
+// Angle-over-time graph
+// ============================================================
+const COL1_SINGLE = '#2A7A5A';   // single pendulum θ₁ (matches green bob)
+const COL1_DOUBLE = '#2A5A8C';   // double pendulum θ₁ (matches blue bob)
+const COL2_DOUBLE = '#5A4A8C';   // double pendulum θ₂ (matches purple bob)
+
+function plotSeries(hist, W, color, mid, scale) {
+  if (hist.length < 1) return;
+  // Oldest point at left, newest at right. We draw a faint connecting line
+  // (so the shape reads even with few points) plus a dot per sample (so it
+  // looks like a curve being plotted, not a smear). The line lifts the pen
+  // across wrap jumps so a rotating arm doesn't streak across the panel.
+  const n = hist.length;
+  const dx = W / (HIST_MAX - 1);
+  const x0 = W - (n - 1) * dx;
+  const xy = (i) => ({ x: x0 + i * dx, y: mid - hist[i] * scale });
+
+  // Faint connecting line
+  gctx.strokeStyle = color + '55';   // ~33% alpha
+  gctx.lineWidth = 1;
+  gctx.beginPath();
+  let penDown = false;
+  for (let i = 0; i < n; i++) {
+    const p = xy(i);
+    if (i > 0 && Math.abs(hist[i] - hist[i-1]) > Math.PI) penDown = false; // wrapped
+    if (!penDown) { gctx.moveTo(p.x, p.y); penDown = true; }
+    else { gctx.lineTo(p.x, p.y); }
+  }
+  gctx.stroke();
+
+  // Points — fade older ones slightly so the leading edge reads as "now"
+  for (let i = 0; i < n; i++) {
+    const p = xy(i);
+    const age = i / n;                 // 0 = oldest, ~1 = newest
+    const r = 1.6 + age * 1.4;         // newer points a touch larger
+    gctx.fillStyle = color + Math.floor((0.35 + age * 0.65) * 255).toString(16).padStart(2, '0');
+    gctx.beginPath();
+    gctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+    gctx.fill();
+  }
+}
+
+function drawGraph() {
+  const W = graphCanvas.offsetWidth;
+  const H = GRAPH_H;
+  if (graphCanvas.width !== W * devicePixelRatio || graphCanvas.height !== H * devicePixelRatio) {
+    graphCanvas.width = W * devicePixelRatio;
+    graphCanvas.height = H * devicePixelRatio;
+    graphCanvas.style.height = H + 'px';
+    gctx.scale(devicePixelRatio, devicePixelRatio);
+  }
+
+  gctx.clearRect(0, 0, W, H);
+
+  const mid = H / 2;
+  const scale = (H / 2 - 14) / Math.PI;   // radians [-PI,PI] -> pixels, with padding
+
+  // Gridlines at 0, ±90°, ±180°
+  const gridAngles = [-Math.PI, -Math.PI/2, 0, Math.PI/2, Math.PI];
+  const gridLabels = ['−180°', '−90°', '0°', '90°', '180°'];
+  gctx.font = '10px "DM Mono", monospace';
+  gctx.textBaseline = 'middle';
+  for (let k = 0; k < gridAngles.length; k++) {
+    const y = mid - gridAngles[k] * scale;
+    gctx.strokeStyle = gridAngles[k] === 0 ? 'rgba(44,40,32,0.18)' : 'rgba(44,40,32,0.08)';
+    gctx.lineWidth = 1;
+    gctx.beginPath();
+    gctx.moveTo(34, y);
+    gctx.lineTo(W, y);
+    gctx.stroke();
+    gctx.fillStyle = 'rgba(136,128,112,0.9)';
+    gctx.textAlign = 'right';
+    gctx.fillText(gridLabels[k], 30, y);
+  }
+
+  // Series
+  if (mode === 'single') {
+    plotSeries(angleHist1, W, COL1_SINGLE, mid, scale);
+  } else {
+    plotSeries(angleHist1, W, COL1_DOUBLE, mid, scale);
+    plotSeries(angleHist2, W, COL2_DOUBLE, mid, scale);
+  }
+}
+
+function updateGraphLegend() {
+  const el = document.getElementById('graph-legend');
+  if (mode === 'single') {
+    el.innerHTML =
+      `<span class="legend-item"><span class="legend-swatch" style="background:${COL1_SINGLE}"></span>θ — angle</span>`;
+  } else {
+    el.innerHTML =
+      `<span class="legend-item"><span class="legend-swatch" style="background:${COL1_DOUBLE}"></span>θ₁ — first arm</span>` +
+      `<span class="legend-item"><span class="legend-swatch" style="background:${COL2_DOUBLE}"></span>θ₂ — second arm</span>`;
+  }
 }
 
 function setMode(m) {
   mode = m;
   document.getElementById('btn-single').classList.toggle('active', m === 'single');
   document.getElementById('btn-double').classList.toggle('active', m === 'double');
+  updateGraphLegend();
   resetSim();
 }
 
@@ -647,6 +833,7 @@ function resetSim() {
 }
 
 initState();
+updateGraphLegend();
 draw();
 </script>
 </body>
